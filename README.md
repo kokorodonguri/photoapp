@@ -26,6 +26,19 @@ dotnet build PhotoCuller.sln
 dotnet run --project PhotoCuller/PhotoCuller.csproj
 ```
 
+## インストーラー作成 (Inno Setup)
+
+Windows上で以下を実行してください。
+
+1. 発行 (publish)
+
+```bash
+dotnet publish PhotoCuller/PhotoCuller.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o artifacts/PhotoCuller
+```
+
+2. Inno Setupで `installer/PhotoCuller.iss` を開き、Compile を実行  
+   出力先: `dist/PhotoCuller-Setup.exe`
+
 ## メモ
 
 - サブフォルダーは対象外（フォルダー直下のみ）です。
