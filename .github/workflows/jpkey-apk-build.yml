@@ -1,0 +1,59 @@
+name: jpkey-apk-build
+
+on:
+  push:
+    branches:
+      - temp/jpkey-apk-build-20260913
+    paths:
+      - 'jpkey-build/**'
+      - '.github/workflows/jpkey-apk-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check payload
+        id: payload
+        shell: bash
+        run: |
+          if [[ -f jpkey-build/jpkey-part-004.txt ]]; then
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-java@v4
+        if: steps.payload.outputs.ready == 'true'
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        if: steps.payload.outputs.ready == 'true'
+        with:
+          gradle-version: '8.9'
+
+      - name: Restore Android project
+        if: steps.payload.outputs.ready == 'true'
+        shell: bash
+        run: |
+          cat jpkey-build/jpkey-part-*.txt | base64 -d > /tmp/jpkey.zip
+          unzip -q /tmp/jpkey.zip -d /tmp
+          test -f /tmp/jpkey-ghproject/settings.gradle
+
+      - name: Build debug APK
+        if: steps.payload.outputs.ready == 'true'
+        working-directory: /tmp/jpkey-ghproject
+        run: gradle --no-daemon :app:assembleDebug
+
+      - name: Upload APK
+        if: steps.payload.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: jpkey-v2.2-optimized-debug-apk
+          path: /tmp/jpkey-ghproject/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 1
