@@ -31,10 +31,13 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - uses: gradle/actions/setup-gradle@v4
+      - name: Install Gradle
         if: steps.payload.outputs.ready == 'true'
-        with:
-          gradle-version: '8.9'
+        shell: bash
+        run: |
+          curl -fL --retry 3 -o /tmp/gradle.zip https://services.gradle.org/distributions/gradle-8.9-bin.zip
+          unzip -q /tmp/gradle.zip -d /tmp
+          /tmp/gradle-8.9/bin/gradle --version
 
       - name: Restore Android project
         if: steps.payload.outputs.ready == 'true'
@@ -47,7 +50,7 @@ jobs:
       - name: Build debug APK
         if: steps.payload.outputs.ready == 'true'
         working-directory: /tmp/jpkey-ghproject
-        run: gradle --no-daemon :app:assembleDebug
+        run: /tmp/gradle-8.9/bin/gradle --no-daemon :app:assembleDebug
 
       - name: Upload APK
         if: steps.payload.outputs.ready == 'true'
